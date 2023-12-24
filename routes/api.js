@@ -6,6 +6,7 @@ const checkAdmin = require('../middlewares/isAdmin');
 const UserController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
 const OrderController = require('../controllers/OrderController');
+const RoomController = require('../controllers/RoomController');
 
 const APIRoute = (app) => {
   router.get('/user', checkAdmin, UserController.listAll);
@@ -22,6 +23,8 @@ const APIRoute = (app) => {
   router.post('/order', OrderController.create);
   router.post('/order-product', OrderController.orderProduct);
   router.put('/payment', OrderController.payment);
+
+  router.get('/room', RoomController.list);
 
   return app.use('/api/', authenticate, router);
 };
