@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
   Room.init(
     {
       room_name: DataTypes.STRING,
+      price: DataTypes.INTEGER,
       status: DataTypes.STRING,
     },
     {

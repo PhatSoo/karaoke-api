@@ -24,5 +24,9 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
     }
   );
+
+  Order.associate = (models) => {
+    Order.hasMany(models.OrderDetail, { foreignKey: 'order_id' });
+  };
   return Order;
 };

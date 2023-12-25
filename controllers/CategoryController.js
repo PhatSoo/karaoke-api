@@ -1,11 +1,11 @@
-const { Room } = require('../models');
+const { Category } = require('../models');
 
 const list = async (req, res) => {
   try {
-    const listRoom = await Room.findAll({ order: ['id'] });
+    const listCate = await Category.findAll();
 
-    if (listRoom) {
-      return res.status(200).json({ success: true, data: listRoom, total: listRoom.length });
+    if (listCate) {
+      return res.status(200).json({ success: true, data: listCate, total: listCate.length });
     }
 
     return res.status(404).json({ success: false, message: 'Something went wrong' });

@@ -20,6 +20,9 @@ module.exports = {
       time_using: {
         type: Sequelize.FLOAT,
       },
+      status: {
+        type: Sequelize.STRING,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

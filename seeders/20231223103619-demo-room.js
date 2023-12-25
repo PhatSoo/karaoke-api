@@ -7,24 +7,28 @@ module.exports = {
       {
         room_name: 'Room 1',
         status: 'NULL',
+        price: 50000,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         room_name: 'Room 2',
         status: 'NULL',
+        price: 50000,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         room_name: 'Room 3',
         status: 'IN USE',
+        price: 50000,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         room_name: 'Room 4',
         status: 'NULL',
+        price: 50000,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

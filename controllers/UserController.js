@@ -1,9 +1,10 @@
 const { User } = require('../models');
+const { Op } = require('sequelize');
 const bcrypt = require('bcrypt');
 
 const listAll = async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({ where: { role: { [Op.ne]: 'ADMIN' } } });
     res.json({ success: true, data: users, total: users.length });
   } catch (error) {
     console.log('====================================');
