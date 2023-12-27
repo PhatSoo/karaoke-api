@@ -8,6 +8,7 @@ const list = async (req, res) => {
         attributes: ['category_name', 'id'],
       },
       order: ['id'],
+      paranoid: false,
     });
     if (listProduct) {
       const listProductFormatted = listProduct.map((product) => {
@@ -104,6 +105,28 @@ const remove = async (req, res) => {
   }
 };
 
+const delete_multiple = async (req, res) => {
+  const { ids } = req.params;
+
+  if (!ids) {
+    return res.status(400).json({ success: false, message: 'Missing required parameters' });
+  }
+
+  try {
+    const deleteMultiple = await Product.destroy({ where: { id: ids.split(',').map(Number) } });
+
+    if (deleteMultiple) {
+      return res.status(200).json({ success: true, message: 'Delete products successfully' });
+    }
+    return res.status(500).json({ success: false, message: 'An error has occurred' });
+  } catch (error) {
+    console.log('====================================');
+    console.log(error);
+    console.log('====================================');
+    return res.status(500).json({ success: false, message: error });
+  }
+};
+
 const detail = async (req, res) => {
   const { product_name } = req.params;
 
@@ -123,10 +146,34 @@ const detail = async (req, res) => {
   }
 };
 
+const handleDeletedAt = async (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Missing required parameters' });
+  }
+
+  try {
+    const updated = await Product.update({ deletedAt: null }, { where: { id } });
+
+    if (updated) {
+      return res.status(200).json({ success: true, message: 'Delete products successfully' });
+    }
+    return res.status(500).json({ success: false, message: 'An error has occurred' });
+  } catch (error) {
+    console.log('====================================');
+    console.log(error);
+    console.log('====================================');
+    return res.status(500).json({ success: false, message: error });
+  }
+};
+
 module.exports = {
   list,
   create,
   update,
   remove,
   detail,
+  delete_multiple,
+  handleDeletedAt,
 };

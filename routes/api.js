@@ -17,7 +17,9 @@ const APIRoute = (app) => {
   router.get('/product', ProductController.list);
   router.post('/product', checkAdmin, ProductController.create);
   router.put('/product', checkAdmin, ProductController.update);
-  router.put('/product/:id', checkAdmin, ProductController.remove);
+  router.delete('/product/:id', checkAdmin, ProductController.remove);
+  router.delete('/product-multiple/:ids', checkAdmin, ProductController.delete_multiple);
+  router.put('/product-show', checkAdmin, ProductController.handleDeletedAt);
 
   router.get('/order/:id', OrderController.orderDetail);
   router.get('/get-order-details/:room_id', OrderController.getOrderDetails);
