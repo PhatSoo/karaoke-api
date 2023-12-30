@@ -1,4 +1,5 @@
-const { Product, Category } = require('../models');
+const { Product, Category, OrderDetail, Order } = require('../models');
+const { Op } = require('sequelize');
 
 const list = async (req, res) => {
   try {
@@ -82,6 +83,10 @@ const update = async (req, res) => {
   }
 };
 
+const checkInUse = async (product_id) => {
+  return OrderDetail.findAll({ where: { product_id }, include: [{ model: Order, where: { status: 'NOT PAID' } }] });
+};
+
 const remove = async (req, res) => {
   const { id } = req.params;
 
@@ -95,6 +100,12 @@ const remove = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    const r = await checkInUse(id);
+
+    if (r.length > 0) {
+      return res.status(500).json({ success: false, message: 'Sản phẩm đang trong quá trình chờ thanh toán' });
+    }
+
     const deleteProduct = await Product.destroy({ where: { id } });
     if (deleteProduct) {
       return res.status(200).json({ success: true, message: 'Delete product successfully' });
@@ -106,24 +117,32 @@ const remove = async (req, res) => {
 };
 
 const delete_multiple = async (req, res) => {
-  const { ids } = req.params;
+  let { ids } = req.params;
+
+  ids = ids.split(',').map(Number);
 
   if (!ids) {
     return res.status(400).json({ success: false, message: 'Missing required parameters' });
   }
 
   try {
-    const deleteMultiple = await Product.destroy({ where: { id: ids.split(',').map(Number) } });
+    await Promise.all(
+      ids.map(async (id) => {
+        const r = await checkInUse(id);
+        if (r.length > 0) {
+          throw new Error('Có sản phẩm đang trong quá trình chờ thanh toán');
+        }
+      })
+    );
+
+    const deleteMultiple = await Product.destroy({ where: { id: ids } });
 
     if (deleteMultiple) {
       return res.status(200).json({ success: true, message: 'Delete products successfully' });
     }
     return res.status(500).json({ success: false, message: 'An error has occurred' });
   } catch (error) {
-    console.log('====================================');
-    console.log(error);
-    console.log('====================================');
-    return res.status(500).json({ success: false, message: error });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -146,28 +165,6 @@ const detail = async (req, res) => {
   }
 };
 
-const handleDeletedAt = async (req, res) => {
-  const { id } = req.body;
-
-  if (!id) {
-    return res.status(400).json({ success: false, message: 'Missing required parameters' });
-  }
-
-  try {
-    const updated = await Product.update({ deletedAt: null }, { where: { id } });
-
-    if (updated) {
-      return res.status(200).json({ success: true, message: 'Delete products successfully' });
-    }
-    return res.status(500).json({ success: false, message: 'An error has occurred' });
-  } catch (error) {
-    console.log('====================================');
-    console.log(error);
-    console.log('====================================');
-    return res.status(500).json({ success: false, message: error });
-  }
-};
-
 module.exports = {
   list,
   create,
@@ -175,5 +172,4 @@ module.exports = {
   remove,
   detail,
   delete_multiple,
-  handleDeletedAt,
 };

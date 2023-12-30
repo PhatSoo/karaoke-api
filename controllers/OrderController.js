@@ -22,12 +22,24 @@ const create = async (req, res) => {
     if (createOrder && list_order.length > 0) {
       // Khi order kem sp
       const orderDetails = list_order.map(async (order) => {
+        // Lấy thông tin sản phẩm
+        const product = await Product.findOne({ where: { id: order.product_id } });
+
+        // Kiểm tra số lượng sản phẩm tồn kho
+        if (product.quantity < order.quantity) {
+          return res.status(400).json({ success: false, message: 'Không đủ hàng trong kho' });
+        }
+
+        // Cập nhật số lượng sản phẩm tồn kho
+        await Product.update({ quantity: product.quantity - order.quantity }, { where: { id: order.product_id } });
+
         return await OrderDetail.create({
           order_id: createOrder.id,
           product_id: order.product_id,
           quantity: order.quantity,
         });
       });
+
       await Promise.all(orderDetails);
     }
     if (createOrder) {
@@ -67,6 +79,17 @@ const orderProduct = async (req, res) => {
           quantity: item.quantity,
         });
       }
+
+      // Lấy thông tin sản phẩm
+      const product = await Product.findOne({ where: { id: item.product_id } });
+
+      // Kiểm tra số lượng sản phẩm tồn kho
+      if (product.quantity < item.quantity) {
+        return res.status(400).json({ success: false, message: 'Không đủ hàng trong kho' });
+      }
+
+      // Cập nhật số lượng sản phẩm tồn kho
+      await Product.update({ quantity: product.quantity - item.quantity }, { where: { id: item.product_id } });
     }
 
     return res.status(200).json({ success: true });
@@ -78,7 +101,7 @@ const orderProduct = async (req, res) => {
   }
 };
 
-const getOrderDetails = async (req, res) => {
+const getOrderDetailsByRoomID = async (req, res) => {
   const { room_id } = req.params;
 
   let result = {};
@@ -96,25 +119,27 @@ const getOrderDetails = async (req, res) => {
         },
       });
 
+      let transformedOrderDetails;
+
       if (orderDetails.length > 0) {
-        const transformedOrderDetails = orderDetails.map((detail) => ({
+        transformedOrderDetails = orderDetails.map((detail) => ({
           id: detail.id,
           product_id: detail.product_id,
           quantity: detail.quantity,
         }));
-
-        result = {
-          id: orderDetails[0].Order.id,
-          room_id: orderDetails[0].Order.room_id,
-          user_id: orderDetails[0].Order.user_id,
-          time_using: orderDetails[0].Order.time_using,
-          status: orderDetails[0].Order.status,
-          item: transformedOrderDetails,
-          createdAt: orderDetails[0].Order.createdAt,
-        };
       } else {
-        result = order;
+        transformedOrderDetails = [];
       }
+
+      result = {
+        id: order.id,
+        room_id: order.room_id,
+        user_id: order.user_id,
+        time_using: order.time_using,
+        status: order.status,
+        item: transformedOrderDetails,
+        createdAt: order.createdAt,
+      };
 
       return res.status(200).json({ success: true, data: result });
     }
@@ -155,17 +180,22 @@ const orderDetail = async (req, res) => {
 };
 
 const payment = async (req, res) => {
-  const { order_id } = req.body;
+  const { order_id, total } = req.body;
 
   if (!order_id) {
     return res.status(400).json({ success: false, message: 'Missing required parameters' });
   }
 
   try {
-    const existingOrder = await Order.findOne({ where: { order_id } });
+    const existingOrder = await Order.findOne({ where: { id: order_id } });
+
+    let countTimeUsing = Math.ceil(new Date() - new Date('2023-12-30 22:07:43.359+07')) / 3600000;
 
     if (existingOrder) {
-      await existingOrder.update({ status: 'PAID' });
+      const updatedOrder = await existingOrder.update({ status: 'PAID', time_using: countTimeUsing, total });
+      if (updatedOrder) {
+        await Room.update({ status: 'NULL' }, { where: { id: existingOrder.room_id } });
+      }
 
       return res.status(200).json({ success: true, message: 'Payment success' });
     }
@@ -182,5 +212,5 @@ module.exports = {
   orderProduct,
   orderDetail,
   payment,
-  getOrderDetails,
+  getOrderDetailsByRoomID,
 };

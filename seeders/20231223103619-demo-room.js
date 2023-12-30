@@ -20,7 +20,7 @@ module.exports = {
       },
       {
         room_name: 'Room 3',
-        status: 'IN USE',
+        status: 'NULL',
         price: 50000,
         createdAt: new Date(),
         updatedAt: new Date(),
